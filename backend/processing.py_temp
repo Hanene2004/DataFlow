@@ -1,0 +1,162 @@
+
+def calculate_quality_score(df: pd.DataFrame) -> dict:
+    score = 100
+    penalties = []
+
+    # 1. Missing Values Penalty
+    total_cells = df.size
+    total_missing = df.isna().sum().sum()
+    missing_pct = (total_missing / total_cells) * 100
+    
+    if missing_pct > 0:
+        penalty = min(30, missing_pct * 1.5) # Cap at 30 points
+        score -= penalty
+        penalties.append(f"Missing Values: -{penalty:.1f} ({(missing_pct):.1f}% data missing)")
+
+    # 2. Duplicate Rows Penalty
+    duplicate_rows = df.duplicated().sum()
+    if duplicate_rows > 0:
+        duplicate_pct = (duplicate_rows / len(df)) * 100
+        penalty = min(20, duplicate_pct * 2) # Cap at 20 points
+        score -= penalty
+        penalties.append(f"Duplicate Rows: -{penalty:.1f} ({duplicate_rows} duplicates found)")
+
+    # 3. Data Types Uniformity (Heuristic)
+    # Check if object columns should be numeric
+    mixed_type_penalty = 0
+    for col in df.select_dtypes(include=['object']):
+        # If > 80% are numeric but it's object, small penalty
+        try:
+             numeric_conversion = pd.to_numeric(df[col], errors='coerce')
+             valid_ratio = numeric_conversion.notna().sum() / len(df)
+             if valid_ratio > 0.8 and valid_ratio < 1.0:
+                 mixed_type_penalty += 5
+        except:
+            pass
+    
+    if mixed_type_penalty > 0:
+        actual_penalty = min(15, mixed_type_penalty)
+        score -= actual_penalty
+        penalties.append(f"Mixed Data Types: -{actual_penalty} (Potential formatting issues)")
+
+    # 4. Outliers Penalty
+    # We already have detect_anomalies, let's use a simplified check here or reuse logic
+    # Just a quick check for extreme outliers impact
+    # Skip for perf or keep simple
+    
+    return {
+        "score": max(0, round(score)),
+        "penalties": penalties,
+        "grade": "A" if score >= 90 else "B" if score >= 80 else "C" if score >= 60 else "D"
+    }
+
+def generate_recommendations(df: pd.DataFrame) -> list:
+    recs = []
+    
+    # 1. Date Column
+    date_cols = [col for col in df.columns if 'date' in col.lower() or 'time' in col.lower()]
+    has_datetime = any(pd.api.types.is_datetime64_any_dtype(df[col]) for col in df.columns)
+    
+    if not date_cols and not has_datetime:
+        recs.append("Add a 'Date' or 'Time' column to enable time-series analysis and trend visualization.")
+    elif date_cols and not has_datetime:
+        recs.append(f"Convert column '{date_cols[0]}' to DateTime format for better time-based features.")
+
+    # 2. Missing Values
+    missing_series = df.isna().sum()
+    cols_with_missing = missing_series[missing_series > 0]
+    if not cols_with_missing.empty:
+        for col, count in cols_with_missing.items():
+            pct = (count / len(df)) * 100
+            if pct > 10:
+                recs.append(f"Column '{col}' has {pct:.1f}% missing values. Consider imputing with Mean/Median or dropping it.")
+    
+    # 3. Categorical High Cardinality
+    for col in df.select_dtypes(include=['object', 'category']):
+        unique_count = df[col].nunique()
+        if unique_count > 50 and unique_count < len(df) * 0.9: # Not unique ID but high variance
+           recs.append(f"Column '{col}' has high cardinality ({unique_count} unique values). Consider grouping minor categories.")
+
+    # 4. Id Columns
+    for col in df.columns:
+        if 'id' in col.lower() and df[col].nunique() == len(df):
+             recs.append(f"Column '{col}' appears to be a unique identifier. It provides no analytical value for aggregation.")
+
+    return recs
+
+def compare_datasets(df1: pd.DataFrame, df2: pd.DataFrame, name1: str, name2: str) -> dict:
+    # 1. Schema Comparison
+    cols1 = set(df1.columns)
+    cols2 = set(df2.columns)
+    
+    common_cols = list(cols1.intersection(cols2))
+    added_cols = list(cols2 - cols1)
+    removed_cols = list(cols1 - cols2)
+    
+    # 2. Row Count Comparison
+    rows1 = len(df1)
+    rows2 = len(df2)
+    row_diff = rows2 - rows1
+    
+    # 3. Value Comparison for Common Numeric Columns
+    comparison_stats = []
+    for col in common_cols:
+        if pd.api.types.is_numeric_dtype(df1[col]) and pd.api.types.is_numeric_dtype(df2[col]):
+            mean1 = df1[col].mean()
+            mean2 = df2[col].mean()
+            diff_mean = mean2 - mean1
+            pct_change = (diff_mean / mean1 * 100) if mean1 != 0 else 0
+            
+            comparison_stats.append({
+                "column": col,
+                "mean_v1": mean1,
+                "mean_v2": mean2,
+                "diff_pct": pct_change,
+                "status": "increased" if diff_mean > 0 else "decreased" if diff_mean < 0 else "same"
+            })
+
+    return {
+        "files": [name1, name2],
+        "schema_diff": {
+            "added_columns": added_cols,
+            "removed_columns": removed_cols,
+            "common_columns": common_cols
+        },
+        "row_diff": {
+            "count_v1": rows1,
+            "count_v2": rows2,
+            "difference": row_diff
+        },
+        "value_comparison": comparison_stats
+    }
+
+def calculate_advanced_correlations(df: pd.DataFrame) -> list:
+    # Select only numeric columns
+    numeric_df = df.select_dtypes(include=[np.number])
+    
+    if numeric_df.empty:
+        return []
+        
+    corr_matrix = numeric_df.corr(method='pearson')
+    
+    # Format for frontend: list of {col1, col2, value}
+    correlations = []
+    columns = corr_matrix.columns
+    
+    for i in range(len(columns)):
+        for j in range(i+1, len(columns)):
+            col1 = columns[i]
+            col2 = columns[j]
+            val = corr_matrix.iloc[i, j]
+            
+            # Smart Filter: Ignore very weak correlations to reduce noise
+            if abs(val) > 0.1: 
+                correlations.append({
+                    "col1": col1,
+                    "col2": col2,
+                    "correlation": float(val)
+                })
+                
+    # Sort by absolute correlation strength
+    correlations.sort(key=lambda x: abs(x['correlation']), reverse=True)
+    return correlations

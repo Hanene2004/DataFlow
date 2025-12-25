@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+python-multipart
+openpyxl
+requests
+python-dotenv
+aiosmtplib
+email-validator
