@@ -1,31 +1,31 @@
-MultiHub Analytics
+🌐 MultiHub Analytics
 
 Plateforme d’analyse de données full-stack combinant une interface web interactive et un moteur de calcul scientifique en Python.
 
-MultiHub Analytics permet d’importer des datasets, de les analyser, de les nettoyer, de créer des modèles prédictifs et de partager les résultats via une interface moderne.
+MultiHub Analytics permet d’importer des datasets, de les analyser, de les nettoyer, de créer des modèles prédictifs et de partager les résultats via une interface moderne et fluide.
 
-Fonctionnalités
+✨ Fonctionnalités
 
-Import de fichiers (CSV / Excel)
+📂 Import de fichiers CSV / Excel
 
-Analyse statistique automatique
+📊 Analyse statistique automatique
 
-Détection des types de colonnes
+🧠 Détection intelligente des types de colonnes
 
-Corrélations et régressions multivariées
+🔗 Corrélations & régressions multivariées
 
-Nettoyage de données (déduplication, imputation)
+🧹 Nettoyage de données (déduplication, imputation)
 
-Visualisations interactives
+📈 Visualisations interactives
 
-Génération de rapports PDF
+🧾 Génération de rapports PDF
 
-Partage sécurisé en lecture seule
+🔒 Partage sécurisé en lecture seule
 
-Historique des versions du dataset
+🕒 Historique des versions du dataset
 
-Architecture
-Frontend (React / TypeScript)
+🏗️ Architecture
+⚛️ Frontend (React / TypeScript)
 
 Pages analytiques (Dashboard, Analysis, Cleaning…)
 
@@ -35,7 +35,7 @@ Visualisations avec Recharts et Plotly
 
 Animations et UX modernes
 
-Backend (Python)
+🐍 Backend (Python)
 
 API FastAPI
 
@@ -45,8 +45,7 @@ Modèles prédictifs avec Scikit-Learn
 
 Envoi de logs par email
 
-Stack Technique
-
+🧰 Stack Technique
 Frontend
 
 React + TypeScript
@@ -65,7 +64,7 @@ Pandas, NumPy
 
 Scikit-Learn
 
-Installation
+🚀 Installation
 Backend
 cd backend
 python -m venv venv
@@ -77,6 +76,6 @@ Frontend
 npm install
 npm run dev
 
-Objectif
+🎯 Objectif
 
-MultiHub Analytics vise à fournir un outil d’analyse de données accessible, performant et orienté insight, en combinant calcul scientifique et interactivité web.
+MultiHub Analytics vise à fournir un outil d’analyse de données accessible, performant et orienté insight, en combinant la rigueur du calcul scientifique et l’interactivité du web moderne.
